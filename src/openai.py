@@ -2,17 +2,11 @@ from agents import Agent, Runner, AgentOutputSchema
 from pydantic import BaseModel
 from typing import Literal
 
-class History(BaseModel):
-  title: str
-  descriptors: list[str]
-  hypothesis: str
-  results: dict  # e.g. {"ctr": "-27%", "avd": "+14%", "outcome": "Retention improved, discovery worse"}
-
 class EvaluationResult(BaseModel):
   evaluation: str
   hypothesis_result: str
 
-async def run_evaluation_agent(period, stats, baseline, descriptors: list[str], video_script: str, history: list[History]):
+async def run_evaluation_agent(period, stats, baseline, descriptors: list[str], hypothesis: str, video_script: str):
 
     print("Running evaluation agent...")
 
@@ -42,19 +36,6 @@ async def run_evaluation_agent(period, stats, baseline, descriptors: list[str], 
       [f"      <descriptor>{value}</descriptor>" for value in descriptors]
     )
 
-    formatted_history = ""
-    for h in history:
-      history_descriptors = "\n".join([f"<descriptor>{d}</descriptor>" for d in h.descriptors])
-      history_results = "\n".join([f"<{k}>{v}</{k}>" for k, v in h.results.items()])
-      formatted_history += f"""
-      <video>
-        <title>{h.title}</title>
-        <descriptors>{history_descriptors}</descriptors>
-        <hypothesis>{h.hypothesis}</hypothesis>
-        <results>{history_results}</results>
-      </video>
-      """
-
     prompt = f"""
     <evaluation>
       <instructions>
@@ -79,9 +60,6 @@ async def run_evaluation_agent(period, stats, baseline, descriptors: list[str], 
           <average_percentage_viewed>{baseline_metrics['average_percentage_viewed']}</average_percentage_viewed>
           <subs_gained>{baseline_metrics['subs_gained']}</subs_gained>
         </baselines>
-        <history>
-          {formatted_history}
-        </history>
       </data>
 
       <response>
@@ -110,10 +88,12 @@ async def run_evaluation_agent(period, stats, baseline, descriptors: list[str], 
       <average_percentage_viewed>{current_metrics['average_percentage_viewed']}</average_percentage_viewed>
       <subs_gained>{current_metrics['subs_gained']}</subs_gained>
     </current_video>
-    <hypothesis>Face visible in first 3 seconds</hypothesis>
+    <hypothesis>{hypothesis}</hypothesis>
     <descriptors>
       {formatted_descriptors}
-    </descriptors>"""
+    </descriptors>
+    <script>{video_script}</script>
+    """
 
     result = await Runner.run(agent, input)
 

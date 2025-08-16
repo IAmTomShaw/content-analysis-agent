@@ -62,7 +62,7 @@ async def main(notion_id: str, period: str):
   for descriptor in properties.get('descriptors', []):
     print(f"  - {descriptor}")
 
-  eval_agent_res = await run_evaluation_agent(period, video_stats_db, baseline_metrics, properties.get('descriptors'), properties.get('script', ''), [])
+  eval_agent_res = await run_evaluation_agent(period, video_stats_db, baseline_metrics, properties.get('descriptors'), properties.get('hypothesis'), properties.get('script', ''))
 
   eval_res = eval_agent_res.evaluation
 
